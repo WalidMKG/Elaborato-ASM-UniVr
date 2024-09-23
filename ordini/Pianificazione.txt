@@ -1,0 +1,13 @@
+Pianificazione HPF:
+5:0
+2:7
+1:11
+6:19
+7:24
+3:27
+8:31
+4:33
+10:38
+9:39
+Conclusione: 48
+Penalty: 508

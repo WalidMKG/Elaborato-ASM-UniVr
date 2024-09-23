@@ -1,0 +1,186 @@
+.section .data
+fd2: .int 0
+msg_EDF: .ascii "Pianificazione EDF:\n"
+conclusione_msg: .ascii "Conclusione: "
+penalty_msg: .ascii "Penalty: "
+valori: .int 0
+lines: .int 0
+penalty: .int 0
+due_punti: .byte ':'
+newline: .byte '\n'
+.section .text
+
+.global task
+.type task,@function
+
+#edi = righe
+#edx = valori
+#ecx = unita tempo
+task:
+    movl $0,penalty
+    movl %ebx,fd2
+    pushl %ebp
+    movl %esp,%ebp
+    addl $8,%ebp
+
+
+    movl $0,%ecx  #tempo
+    movl %edx,valori
+
+    movl $0,%edi
+    movl $0,penalty
+    
+task_loop:
+
+    cmpl $0,%edx
+    je fine
+    decl %edx
+    
+    #numero deve essere in eax
+    movl (%ebp,%edx,4),%eax
+    pushl %edx
+    pushl %ecx
+    movl fd2,%ebx
+    call printInt
+    
+    
+    #stampa ':'
+	movl $4, %eax             
+	movl $1, %ebx             
+	movl $due_punti, %ecx     
+    movl $1,%edx    
+	int $0x80
+    movl $4,%eax
+    movl fd2,%ebx
+    cmpl $0,%ebx
+	je nf1
+    movl $due_punti,%ecx
+    movl $1,%edx
+    int $0x80
+nf1:
+    #STAMPA INIZIO     
+    popl %ecx
+    movl %ecx,%eax
+    pushl %ecx
+    movl fd2,%ebx
+    call printInt
+
+    #STAMPA NEWLINE
+    movl $4, %eax             
+	movl $1, %ebx             
+	movl $newline, %ecx     
+    movl $1,%edx    
+	int $0x80
+    movl $4,%eax
+    movl fd2,%ebx
+    cmpl $0,%ebx
+	je nf2
+    movl $newline,%ecx
+    movl $1,%edx
+    int $0x80
+nf2:
+    popl %ecx
+    popl %edx
+
+    #Incremento tempo di durata ciclo
+    decl %edx
+    addl (%ebp,%edx,4),%ecx
+
+    #sposto scadenza prodotto in %ebx
+    decl %edx
+    movl (%ebp,%edx,4),%ebx
+
+    #Se sono sopra la scadenza modifico penalita
+    cmpl %ebx,%ecx
+    jg ritardo
+    decl %edx
+    jmp task_loop
+ritardo:
+    pushl %ecx
+    pushl %edx
+    subl %ebx,%ecx
+    movl %ecx,%eax #ritardo scadenza
+    
+    movl (%ebp,%edx,4),%ebx #priotita
+    
+    mul %ebx #100*5 = 500 max ris->%eax parte bassa
+
+    addl %eax,penalty
+
+    popl %edx
+    popl %ecx #resetto ecx
+    cmpl $0, %edx
+    je fine
+
+    decl %edx
+    
+    jmp task_loop
+
+fine:
+    pushl %ecx
+    movl $4, %eax             
+	movl $1, %ebx             
+	movl $conclusione_msg, %ecx     
+    movl $13,%edx    
+	int $0x80
+    movl $4,%eax
+    movl fd2,%ebx
+    cmpl $0,%ebx
+	je nf3
+    movl $conclusione_msg,%ecx
+    movl $13,%edx
+    int $0x80
+nf3:
+    popl %eax
+    movl fd2,%ebx
+    call printInt #CONCLUSIONE: 
+
+    movl $4, %eax             
+	movl $1, %ebx             
+	movl $newline, %ecx     
+    movl $1,%edx    
+	int $0x80
+    movl $4,%eax
+    movl fd2,%ebx
+    cmpl $0,%ebx
+	je nf4
+    movl $newline,%ecx
+    movl $1,%edx
+    int $0x80
+nf4:
+    movl $4, %eax             
+	movl $1, %ebx             
+	movl $penalty_msg, %ecx     
+    movl $9,%edx    
+	int $0x80
+    movl $4,%eax
+    movl fd2,%ebx
+    cmpl $0,%ebx
+	je nf5
+    movl $penalty_msg,%ecx
+    movl $9,%edx
+    int $0x80
+nf5:
+    movl penalty,%eax
+    movl fd2,%ebx
+    call printInt
+
+
+    movl $4, %eax             
+	movl $1, %ebx             
+	movl $newline, %ecx     
+    movl $1,%edx    
+	int $0x80
+    movl $4,%eax
+    movl fd2,%ebx
+    cmpl $0,%ebx
+	je nf6
+    movl $newline,%ecx
+    movl $1,%edx
+    int $0x80
+nf6:    
+
+    popl %ebp
+
+    ret
+    
